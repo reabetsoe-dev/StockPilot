@@ -8,11 +8,7 @@ It is designed as a professional portfolio project: realistic business workflows
 
 ## Live Demo
 
-The project is Vercel-ready. Add the production URL here after connecting the repository and configuring the environment variables:
-
-```text
-https://your-stockpilot-vercel-url.vercel.app
-```
+Production: https://stockpilot-inventory-platform-delta.vercel.app
 
 ## Business Problem
 
