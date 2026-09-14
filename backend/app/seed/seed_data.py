@@ -1,16 +1,44 @@
+from datetime import date, timedelta
+from decimal import Decimal
+
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.database import SessionLocal, init_db
 from app.core.security import get_password_hash
+from app.models.base import utc_now
 from app.models.category import Category
 from app.models.department import Department
+from app.models.inventory import StockMovement, StockMovementType
+from app.models.notification import Notification
+from app.models.procurement import (
+    GoodsReceipt,
+    GoodsReceiptItem,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    PurchaseOrderStatus,
+    PurchaseRequest,
+    PurchaseRequestItem,
+    PurchaseRequestPriority,
+    PurchaseRequestStatus,
+)
 from app.models.product import Product
 from app.models.supplier import Supplier
 from app.models.user import User, UserRole
 from app.models.warehouse import Warehouse
+from app.models.warehouse_ops import (
+    StockAdjustment,
+    StockAdjustmentType,
+    StockRequest,
+    StockRequestItem,
+    StockRequestStatus,
+    StockTransfer,
+    StockTransferItem,
+    StockTransferStatus,
+)
 from app.services.audit_service import record_audit_log
 from app.services.inventory_service import record_opening_balance
+from app.services.notification_service import create_notification
 
 DEMO_PASSWORD = "Demo123!"
 
@@ -35,6 +63,16 @@ DEMO_USERS = [
     ("Sipho Dlamini", "sipho.dlamini@stockpilot.local", UserRole.PROCUREMENT_OFFICER, "Procurement"),
     ("Naledi Khumalo", "naledi.khumalo@stockpilot.local", UserRole.DEPARTMENT_REQUESTER, "Sales"),
     ("Marcus Reed", "marcus.reed@stockpilot.local", UserRole.WAREHOUSE_OFFICER, "Warehouse"),
+    ("Grace Moloi", "grace.moloi@stockpilot.local", UserRole.ADMINISTRATOR, "Finance"),
+    ("Palesa Radebe", "palesa.radebe@stockpilot.local", UserRole.INVENTORY_MANAGER, "Warehouse"),
+    ("Owen Carter", "owen.carter@stockpilot.local", UserRole.PROCUREMENT_OFFICER, "Procurement"),
+    ("Mpho Letsie", "mpho.letsie@stockpilot.local", UserRole.WAREHOUSE_OFFICER, "Warehouse"),
+    ("Anika Pillay", "anika.pillay@stockpilot.local", UserRole.DEPARTMENT_REQUESTER, "Administration"),
+    ("Tumi Sekete", "tumi.sekete@stockpilot.local", UserRole.DEPARTMENT_REQUESTER, "Operations"),
+    ("Ethan Wright", "ethan.wright@stockpilot.local", UserRole.DEPARTMENT_REQUESTER, "Sales"),
+    ("Zara Maseko", "zara.maseko@stockpilot.local", UserRole.AUDITOR, "Finance"),
+    ("Nate Foster", "nate.foster@stockpilot.local", UserRole.INVENTORY_MANAGER, "Operations"),
+    ("Keabetswe Dube", "keabetswe.dube@stockpilot.local", UserRole.PROCUREMENT_OFFICER, "Procurement"),
 ]
 
 CATEGORIES = [
@@ -130,6 +168,50 @@ OPENING_STOCK_OVERRIDES: dict[str, list[tuple[str, int, int]]] = {
     "VEH-BAT-12V": [("CENTRAL", 2, 0), ("NORTH", 0, 0), ("RETAIL", 0, 0)],
     "TOOL-PALLET-JACK": [("CENTRAL", 1, 0), ("NORTH", 0, 0), ("RETAIL", 0, 0)],
 }
+
+REQUEST_PURPOSES = [
+    "Replace aging laptops for hybrid operations staff.",
+    "Restock paper and toner for finance month-end reporting.",
+    "Network cabinet refresh for the north warehouse.",
+    "Office seating for the expanded procurement team.",
+    "Warehouse safety consumables for the next quarter.",
+    "Delivery fleet service parts for scheduled maintenance.",
+    "Refresh breakroom supplies for customer workshops.",
+    "Barcode equipment for receiving accuracy.",
+    "Packaging materials for retail dispatch growth.",
+    "Monitor upgrade for analytics workstations.",
+    "Emergency UPS cover for branch routers.",
+    "Cleaning supplies for peak-season warehouse shifts.",
+    "Stationery pack for onboarding new employees.",
+    "Replacement keyboards and mice for shared desks.",
+    "Meeting room furniture for supplier reviews.",
+    "Network cabling for office moves.",
+    "Toner reserve for sales proposal printing.",
+    "Pallet handling tool replacement.",
+    "Safety boots for new warehouse team members.",
+    "Vehicle battery reserve for delivery fleet.",
+    "External SSDs for secure field backups.",
+    "Shipping cartons for ecommerce dispatch.",
+]
+
+PURCHASE_ORDER_SKUS = [
+    ["LAP-HP-840", "MON-DELL-24"],
+    ["PAP-A4-REAM", "TON-HP-410"],
+    ["NET-SW-24", "NET-CAT6-10M"],
+    ["CHR-ERG-01", "DSK-1400-OAK"],
+    ["SAFE-GLOVE-IND", "SAFE-VEST-REF"],
+    ["VEH-OIL-FLT", "VEH-AIR-FLT"],
+    ["FOOD-COF-1KG", "FOOD-WATER-24"],
+    ["TOOL-BARCODE-SC", "TOOL-LABEL-PR"],
+    ["PACK-CARTON-M", "PACK-TAPE-48"],
+    ["MON-LG-27", "SSD-SAND-1TB"],
+    ["ELEC-UPS-1000", "ELEC-EXT-6WAY"],
+    ["CLN-DISINF-5L", "CLN-HAND-5L"],
+    ["NBK-A5-12", "PEN-BALL-BLK"],
+    ["MOU-LOGI-M185", "KEY-USB-STD"],
+    ["CAB-FILE-4D", "TBL-MEET-8"],
+    ["NET-CAT6-3M", "NET-ROUTER-BR"],
+]
 
 
 def seed_departments(db: Session) -> dict[str, Department]:
@@ -308,6 +390,385 @@ def seed_opening_inventory(
             )
 
 
+def user_by_email(db: Session, email: str) -> User:
+    user = db.scalar(select(User).where(User.email == email))
+    if user is None:
+        raise RuntimeError(f"Seed user {email} was not created.")
+    return user
+
+
+def movement_exists(db: Session, reference_type: str, reference_id: str, movement_type: StockMovementType) -> bool:
+    return db.scalar(
+        select(StockMovement).where(
+            StockMovement.reference_type == reference_type,
+            StockMovement.reference_id == reference_id,
+            StockMovement.movement_type == movement_type,
+        )
+    ) is not None
+
+
+def seed_purchase_requests(
+    db: Session,
+    departments: dict[str, Department],
+    products: dict[str, Product],
+    requesters: list[User],
+) -> dict[str, PurchaseRequest]:
+    year = date.today().year
+    statuses = [
+        PurchaseRequestStatus.DRAFT,
+        PurchaseRequestStatus.SUBMITTED,
+        PurchaseRequestStatus.APPROVED,
+        PurchaseRequestStatus.REJECTED,
+    ]
+    priorities = [
+        PurchaseRequestPriority.NORMAL,
+        PurchaseRequestPriority.HIGH,
+        PurchaseRequestPriority.URGENT,
+        PurchaseRequestPriority.LOW,
+    ]
+    department_cycle = ["Information Technology", "Operations", "Sales", "Administration", "Warehouse"]
+    product_values = list(products.values())
+    requests: dict[str, PurchaseRequest] = {}
+    for index, purpose in enumerate(REQUEST_PURPOSES, start=1):
+        reference = f"PR-{year}-{index:04d}"
+        request = db.scalar(select(PurchaseRequest).where(PurchaseRequest.reference_number == reference))
+        requester = requesters[(index - 1) % len(requesters)]
+        department = departments[department_cycle[(index - 1) % len(department_cycle)]]
+        if request is None:
+            request = PurchaseRequest(
+                reference_number=reference,
+                requested_by=requester.id,
+                department_id=department.id,
+                purpose=purpose,
+                priority=priorities[(index - 1) % len(priorities)],
+                status=statuses[(index - 1) % len(statuses)],
+            )
+            db.add(request)
+            db.flush()
+            for item_offset in range(2):
+                product = product_values[(index * 3 + item_offset) % len(product_values)]
+                db.add(
+                    PurchaseRequestItem(
+                        purchase_request_id=request.id,
+                        product_id=product.id,
+                        description=product.name,
+                        quantity=2 + ((index + item_offset) % 8),
+                        estimated_unit_price=product.cost_price,
+                    )
+                )
+        else:
+            request.requested_by = requester.id
+            request.department_id = department.id
+            request.purpose = purpose
+            request.priority = priorities[(index - 1) % len(priorities)]
+            if request.status not in {PurchaseRequestStatus.CONVERTED_TO_PO}:
+                request.status = statuses[(index - 1) % len(statuses)]
+        requests[reference] = request
+    return requests
+
+
+def seed_purchase_orders(
+    db: Session,
+    products: dict[str, Product],
+    suppliers: dict[str, Supplier],
+    purchase_requests: dict[str, PurchaseRequest],
+    actor: User,
+) -> dict[str, PurchaseOrder]:
+    year = date.today().year
+    supplier_values = list(suppliers.values())
+    orders: dict[str, PurchaseOrder] = {}
+    for index, skus in enumerate(PURCHASE_ORDER_SKUS, start=1):
+        reference = f"PO-{year}-{index:04d}"
+        order = db.scalar(select(PurchaseOrder).where(PurchaseOrder.po_number == reference))
+        supplier = supplier_values[(index - 1) % len(supplier_values)]
+        linked_request = purchase_requests.get(f"PR-{year}-{index:04d}")
+        if order is None:
+            order = PurchaseOrder(
+                po_number=reference,
+                supplier_id=supplier.id,
+                purchase_request_id=linked_request.id if linked_request else None,
+                order_date=date.today() - timedelta(days=30 - index),
+                expected_delivery_date=date.today() + timedelta(days=index % 12),
+                status=PurchaseOrderStatus.ISSUED,
+                notes="Seeded portfolio purchase order.",
+                created_by=actor.id,
+            )
+            db.add(order)
+            db.flush()
+            subtotal = Decimal("0.00")
+            for item_offset, sku in enumerate(skus):
+                product = products[sku]
+                quantity = 8 + index + item_offset * 3
+                unit_price = Decimal(product.cost_price)
+                line_total = (Decimal(quantity) * unit_price).quantize(Decimal("0.01"))
+                subtotal += line_total
+                db.add(
+                    PurchaseOrderItem(
+                        purchase_order_id=order.id,
+                        product_id=product.id,
+                        description=product.name,
+                        quantity_ordered=quantity,
+                        quantity_received=0,
+                        unit_price=unit_price,
+                        line_total=line_total,
+                    )
+                )
+            order.subtotal = subtotal.quantize(Decimal("0.01"))
+            order.tax = (order.subtotal * Decimal("0.15")).quantize(Decimal("0.01"))
+            order.total = (order.subtotal + order.tax).quantize(Decimal("0.01"))
+        else:
+            order.supplier_id = supplier.id
+        if linked_request and linked_request.status == PurchaseRequestStatus.APPROVED:
+            linked_request.status = PurchaseRequestStatus.CONVERTED_TO_PO
+        orders[reference] = order
+    return orders
+
+
+def seed_goods_receipts(
+    db: Session,
+    purchase_orders: dict[str, PurchaseOrder],
+    warehouses: dict[str, Warehouse],
+    actor: User,
+) -> None:
+    year = date.today().year
+    for index, reference in enumerate(list(purchase_orders.keys())[:8], start=1):
+        receipt_number = f"GRN-{year}-{index:04d}"
+        if db.scalar(select(GoodsReceipt).where(GoodsReceipt.receipt_number == receipt_number)) is not None:
+            continue
+        order = db.scalar(
+            select(PurchaseOrder)
+            .where(PurchaseOrder.id == purchase_orders[reference].id)
+            .options(selectinload(PurchaseOrder.items).selectinload(PurchaseOrderItem.product))
+        )
+        warehouse = warehouses["CENTRAL" if index % 2 else "NORTH"]
+        receipt = GoodsReceipt(
+            receipt_number=receipt_number,
+            purchase_order_id=order.id,
+            warehouse_id=warehouse.id,
+            received_by=actor.id,
+            received_date=date.today() - timedelta(days=8 - index),
+            notes="Seeded goods receipt for portfolio demo history.",
+        )
+        db.add(receipt)
+        db.flush()
+        for item in order.items:
+            receive_quantity = item.quantity_ordered if index > 3 else max(1, item.quantity_ordered // 2)
+            item.quantity_received += receive_quantity
+            db.add(
+                GoodsReceiptItem(
+                    goods_receipt_id=receipt.id,
+                    purchase_order_item_id=item.id,
+                    product_id=item.product_id,
+                    quantity_received=receive_quantity,
+                    quantity_rejected=0,
+                    notes="Accepted into warehouse stock.",
+                )
+            )
+            if not db.scalar(
+                select(StockMovement).where(
+                    StockMovement.reference_type == "GOODS_RECEIPT",
+                    StockMovement.reference_id == receipt_number,
+                    StockMovement.product_id == item.product_id,
+                    StockMovement.warehouse_id == warehouse.id,
+                    StockMovement.movement_type == StockMovementType.GOODS_RECEIPT,
+                )
+            ):
+                from app.services.inventory_service import record_stock_movement
+
+                record_stock_movement(
+                    db,
+                    item.product,
+                    warehouse,
+                    StockMovementType.GOODS_RECEIPT,
+                    receive_quantity,
+                    actor,
+                    "GOODS_RECEIPT",
+                    receipt_number,
+                    f"Seeded receipt against {order.po_number}.",
+                )
+        order.status = (
+            PurchaseOrderStatus.RECEIVED
+            if all(item.quantity_received >= item.quantity_ordered for item in order.items)
+            else PurchaseOrderStatus.PARTIALLY_RECEIVED
+        )
+
+
+def seed_stock_requests(
+    db: Session,
+    departments: dict[str, Department],
+    products: dict[str, Product],
+    warehouses: dict[str, Warehouse],
+    requesters: list[User],
+    actor: User,
+) -> None:
+    from app.services.inventory_service import record_stock_movement
+
+    year = date.today().year
+    stock_skus = ["PAP-A4-REAM", "PEN-BALL-BLK", "MOU-LOGI-M185", "KEY-USB-STD", "PACK-CARTON-M", "SAFE-VEST-REF"]
+    for index in range(1, 13):
+        reference = f"SR-{year}-{index:04d}"
+        request = db.scalar(select(StockRequest).where(StockRequest.reference_number == reference))
+        requester = requesters[(index - 1) % len(requesters)]
+        if request is None:
+            request = StockRequest(
+                reference_number=reference,
+                department_id=departments[["Information Technology", "Sales", "Operations", "Administration"][index % 4]].id,
+                requested_by=requester.id,
+                source_warehouse_id=warehouses["CENTRAL"].id,
+                purpose=f"Internal stock issue for department operating request {index}.",
+                status=StockRequestStatus.ISSUED if index <= 5 else (StockRequestStatus.APPROVED if index <= 8 else StockRequestStatus.SUBMITTED),
+                issued_by=actor.id if index <= 5 else None,
+                issued_at=utc_now() if index <= 5 else None,
+            )
+            db.add(request)
+            db.flush()
+            for offset in range(2):
+                product = products[stock_skus[(index + offset) % len(stock_skus)]]
+                requested_quantity = 2 + ((index + offset) % 5)
+                item = StockRequestItem(
+                    stock_request_id=request.id,
+                    product_id=product.id,
+                    quantity_requested=requested_quantity,
+                    quantity_issued=requested_quantity if index <= 5 else 0,
+                )
+                db.add(item)
+                if index <= 5 and not db.scalar(
+                    select(StockMovement).where(
+                        StockMovement.reference_type == "STOCK_REQUEST",
+                        StockMovement.reference_id == reference,
+                        StockMovement.product_id == product.id,
+                        StockMovement.movement_type == StockMovementType.STOCK_ISSUE,
+                    )
+                ):
+                    record_stock_movement(
+                        db,
+                        product,
+                        warehouses["CENTRAL"],
+                        StockMovementType.STOCK_ISSUE,
+                        requested_quantity,
+                        actor,
+                        "STOCK_REQUEST",
+                        reference,
+                        f"Seeded issue for {reference}.",
+                    )
+
+
+def seed_transfers(
+    db: Session,
+    products: dict[str, Product],
+    warehouses: dict[str, Warehouse],
+    actor: User,
+) -> None:
+    from app.services.inventory_service import record_stock_movement
+
+    year = date.today().year
+    transfer_skus = ["PAP-A4-REAM", "NET-CAT6-3M", "PACK-CARTON-M", "SAFE-GLOVE-IND", "FOOD-WATER-24", "ELEC-HDMI-2M"]
+    for index, sku in enumerate(transfer_skus, start=1):
+        reference = f"TRF-{year}-{index:04d}"
+        transfer = db.scalar(select(StockTransfer).where(StockTransfer.transfer_number == reference))
+        if transfer is None:
+            status_value = StockTransferStatus.COMPLETED if index <= 4 else (StockTransferStatus.IN_TRANSIT if index == 5 else StockTransferStatus.DRAFT)
+            transfer = StockTransfer(
+                transfer_number=reference,
+                source_warehouse_id=warehouses["CENTRAL"].id,
+                destination_warehouse_id=warehouses["NORTH" if index % 2 else "RETAIL"].id,
+                status=status_value,
+                requested_by=actor.id,
+                completed_by=actor.id if status_value == StockTransferStatus.COMPLETED else None,
+                completed_at=utc_now() if status_value == StockTransferStatus.COMPLETED else None,
+            )
+            db.add(transfer)
+            db.flush()
+            product = products[sku]
+            quantity = 3 + index
+            db.add(StockTransferItem(stock_transfer_id=transfer.id, product_id=product.id, quantity=quantity))
+            if status_value in {StockTransferStatus.COMPLETED, StockTransferStatus.IN_TRANSIT} and not db.scalar(
+                select(StockMovement).where(
+                    StockMovement.reference_type == "STOCK_TRANSFER",
+                    StockMovement.reference_id == reference,
+                    StockMovement.movement_type == StockMovementType.TRANSFER_OUT,
+                )
+            ):
+                record_stock_movement(
+                    db,
+                    product,
+                    warehouses["CENTRAL"],
+                    StockMovementType.TRANSFER_OUT,
+                    quantity,
+                    actor,
+                    "STOCK_TRANSFER",
+                    reference,
+                    "Seeded transfer dispatch.",
+                )
+            if status_value == StockTransferStatus.COMPLETED and not db.scalar(
+                select(StockMovement).where(
+                    StockMovement.reference_type == "STOCK_TRANSFER",
+                    StockMovement.reference_id == reference,
+                    StockMovement.movement_type == StockMovementType.TRANSFER_IN,
+                )
+            ):
+                record_stock_movement(
+                    db,
+                    product,
+                    warehouses["NORTH" if index % 2 else "RETAIL"],
+                    StockMovementType.TRANSFER_IN,
+                    quantity,
+                    actor,
+                    "STOCK_TRANSFER",
+                    reference,
+                    "Seeded transfer receipt.",
+                )
+
+
+def seed_adjustments(
+    db: Session,
+    products: dict[str, Product],
+    warehouses: dict[str, Warehouse],
+    actor: User,
+) -> None:
+    from app.services.inventory_service import record_stock_movement
+
+    year = date.today().year
+    adjustments = [
+        ("ADJ", "CLN-DISINF-5L", "CENTRAL", StockAdjustmentType.INCREASE, 6, "Cycle count found additional sealed bottles."),
+        ("ADJ", "PACK-TAPE-48", "CENTRAL", StockAdjustmentType.DECREASE, 4, "Damaged rolls removed from available stock."),
+        ("ADJ", "FOOD-COF-1KG", "NORTH", StockAdjustmentType.INCREASE, 3, "Branch returned unopened coffee stock."),
+        ("ADJ", "SAFE-GLOVE-IND", "CENTRAL", StockAdjustmentType.DECREASE, 5, "Warehouse gloves written off after inspection."),
+        ("ADJ", "ELEC-HDMI-2M", "RETAIL", StockAdjustmentType.INCREASE, 2, "Recovered cables from meeting-room setup."),
+    ]
+    for index, (_, sku, warehouse_code, adjustment_type, quantity, reason) in enumerate(adjustments, start=1):
+        reference = f"ADJ-{year}-{index:04d}"
+        if db.scalar(select(StockAdjustment).where(StockAdjustment.adjustment_number == reference)) is not None:
+            continue
+        product = products[sku]
+        warehouse = warehouses[warehouse_code]
+        adjustment = StockAdjustment(
+            adjustment_number=reference,
+            product_id=product.id,
+            warehouse_id=warehouse.id,
+            adjustment_type=adjustment_type,
+            quantity=quantity,
+            reason=reason,
+            notes="Seeded stock adjustment for audit trail demonstration.",
+            performed_by=actor.id,
+        )
+        db.add(adjustment)
+        movement_type = StockMovementType.ADJUSTMENT_INCREASE if adjustment_type == StockAdjustmentType.INCREASE else StockMovementType.ADJUSTMENT_DECREASE
+        record_stock_movement(db, product, warehouse, movement_type, quantity, actor, "STOCK_ADJUSTMENT", reference, reason)
+
+
+def seed_notifications(db: Session, users: dict[str, User]) -> None:
+    notifications = [
+        ("Low stock review", "Several products are at or below reorder level.", users["inventory@stockpilot.local"].id, "LowStock", None, "/low-stock"),
+        ("PO delivery watch", "Open purchase orders are awaiting warehouse receipt.", users["warehouse@stockpilot.local"].id, "PurchaseOrder", None, "/goods-receiving"),
+        ("Supplier follow-up", "Partially received purchase orders need procurement follow-up.", users["procurement@stockpilot.local"].id, "PurchaseOrder", None, "/purchase-orders"),
+        ("Audit snapshot ready", "Stock movements and adjustments are available for audit review.", users["auditor@stockpilot.local"].id, "AuditLog", None, "/audit-logs"),
+    ]
+    for title, message, user_id, entity_type, entity_id, action_url in notifications:
+        if db.scalar(select(Notification).where(Notification.title == title, Notification.user_id == user_id)) is None:
+            create_notification(db, title, message, user_id, entity_type, entity_id, action_url)
+
+
 def seed_demo_data(db: Session) -> None:
     departments = seed_departments(db)
     seed_users(db, departments)
@@ -317,14 +778,30 @@ def seed_demo_data(db: Session) -> None:
     products = seed_products(db, categories, suppliers)
     db.flush()
     admin = db.scalar(select(User).where(User.email == "admin@stockpilot.local"))
+    users_by_email = {email: user_by_email(db, email) for _, email, _, _ in DEMO_USERS}
+    requesters = [
+        users_by_email["requester@stockpilot.local"],
+        users_by_email["naledi.khumalo@stockpilot.local"],
+        users_by_email["anika.pillay@stockpilot.local"],
+        users_by_email["tumi.sekete@stockpilot.local"],
+        users_by_email["ethan.wright@stockpilot.local"],
+    ]
     seed_opening_inventory(db, products, warehouses, admin)
+    purchase_requests = seed_purchase_requests(db, departments, products, requesters)
+    purchase_orders = seed_purchase_orders(db, products, suppliers, purchase_requests, users_by_email["procurement@stockpilot.local"])
+    db.flush()
+    seed_goods_receipts(db, purchase_orders, warehouses, users_by_email["warehouse@stockpilot.local"])
+    seed_stock_requests(db, departments, products, warehouses, requesters, users_by_email["warehouse@stockpilot.local"])
+    seed_transfers(db, products, warehouses, users_by_email["warehouse@stockpilot.local"])
+    seed_adjustments(db, products, warehouses, users_by_email["inventory@stockpilot.local"])
+    seed_notifications(db, users_by_email)
     record_audit_log(
         db,
         admin,
         "DEMO_DATA_SEEDED",
         "System",
         None,
-        "StockPilot demonstration organization and catalog records were seeded.",
+        "StockPilot demonstration organization, catalog, workflows, and stock ledger were seeded.",
     )
     db.commit()
 
@@ -334,7 +811,7 @@ def main() -> None:
     db = SessionLocal()
     try:
         seed_demo_data(db)
-        print("StockPilot demo accounts, catalog records, and opening stock ledger seeded.")
+        print("StockPilot demo accounts, catalog, workflows, and stock ledger seeded.")
     finally:
         db.close()
 

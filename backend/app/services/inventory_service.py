@@ -13,6 +13,7 @@ from app.models.warehouse import Warehouse
 from app.schemas.inventory import (
     InventoryBalanceRead,
     InventoryItem,
+    LowStockItem,
     ProductInventoryDetail,
     StockMovementRead,
 )
@@ -358,3 +359,23 @@ def inventory_snapshot_metrics(db: Session) -> dict[str, int | Decimal]:
         "low_stock_items": low_stock_items,
         "out_of_stock_items": out_of_stock_items,
     }
+
+
+def list_low_stock_items(db: Session) -> list[LowStockItem]:
+    rows = [
+        item
+        for item in list_inventory(db)
+        if item.stock_status in {"LOW_STOCK", "OUT_OF_STOCK"}
+    ]
+    low_stock: list[LowStockItem] = []
+    for item in rows:
+        target = max(item.reorder_level * 3, item.reorder_level + 1)
+        suggested = max(0, target - item.available_quantity)
+        low_stock.append(
+            LowStockItem(
+                **item.model_dump(),
+                suggested_target_quantity=target,
+                suggested_reorder_quantity=suggested,
+            )
+        )
+    return low_stock

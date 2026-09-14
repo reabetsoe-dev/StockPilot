@@ -38,6 +38,11 @@ class InventoryItem(BaseModel):
     warehouse_count: int
 
 
+class LowStockItem(InventoryItem):
+    suggested_reorder_quantity: int
+    suggested_target_quantity: int
+
+
 class StockMovementRead(BaseModel):
     id: int
     product_id: int

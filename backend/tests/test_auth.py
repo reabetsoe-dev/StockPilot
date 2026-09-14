@@ -47,5 +47,5 @@ def test_dashboard_summary_returns_phase_one_metrics(client):
     body = response.json()
     assert body["organization"] == "StockPilot Distribution Ltd"
     assert body["departments"] == 7
-    assert body["demo_accounts"] == 10
+    assert body["demo_accounts"] == 20
     assert len(body["role_counts"]) == 6

@@ -3,9 +3,13 @@ import {
   AlertTriangle,
   Building2,
   CheckCircle2,
+  ClipboardList,
   PackagePlus,
   PackageX,
+  PackageCheck,
+  Repeat2,
   ShieldCheck,
+  ShoppingCart,
   Tags,
   Truck,
   Users,
@@ -17,12 +21,17 @@ import { useQuery } from "@tanstack/react-query";
 import { StatCard } from "../components/StatCard";
 import { api } from "../services/api";
 import type { DashboardSummary } from "../types/dashboard";
+import type { AnalyticsSummary } from "../types/operations";
 import { formatMoney, roleLabel } from "../utils/format";
 
 export function DashboardPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard-summary"],
     queryFn: async () => (await api.get<DashboardSummary>("/dashboard/summary")).data,
+  });
+  const { data: analytics, isLoading: analyticsLoading } = useQuery({
+    queryKey: ["analytics-dashboard"],
+    queryFn: async () => (await api.get<AnalyticsSummary>("/analytics/dashboard")).data,
   });
 
   const roleData =
@@ -41,8 +50,8 @@ export function DashboardPage() {
               {data?.organization ?? "StockPilot Distribution Ltd"}
             </h1>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600 dark:text-slate-300">
-              Secure access, role-aware navigation, user administration, and catalog master data now anchor the
-              backend stock ledger, opening balances, valuation, and procurement lifecycle.
+              Secure access, role-aware navigation, catalog master data, stock ledger movements, purchase workflows,
+              receiving, warehouse transfers, reorder management, and analytics run through the backend API.
             </p>
           </div>
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
@@ -57,6 +66,13 @@ export function DashboardPage() {
         <StatCard label="Products" value={isLoading ? "..." : data?.products ?? 0} tone="blue" icon={PackagePlus} />
         <StatCard label="Low stock" value={isLoading ? "..." : data?.low_stock_items ?? 0} tone="amber" icon={AlertTriangle} />
         <StatCard label="Out of stock" value={isLoading ? "..." : data?.out_of_stock_items ?? 0} tone="slate" icon={PackageX} />
+      </section>
+
+      <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Pending purchase requests" value={analyticsLoading ? "..." : analytics?.pending_purchase_requests ?? 0} tone="amber" icon={ClipboardList} />
+        <StatCard label="Open purchase orders" value={analyticsLoading ? "..." : analytics?.open_purchase_orders ?? 0} tone="blue" icon={ShoppingCart} />
+        <StatCard label="Goods received" value={analyticsLoading ? "..." : analytics?.goods_received ?? 0} tone="emerald" icon={PackageCheck} />
+        <StatCard label="Warehouse transfers" value={analyticsLoading ? "..." : analytics?.warehouse_transfers ?? 0} tone="slate" icon={Repeat2} />
       </section>
 
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">

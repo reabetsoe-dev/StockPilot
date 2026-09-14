@@ -3,13 +3,16 @@ import {
   Building2,
   ClipboardList,
   FileClock,
+  FileText,
   History,
   LayoutDashboard,
   Layers3,
+  Mail,
   PackageSearch,
   PackagePlus,
+  Repeat2,
   Settings,
-  ShieldCheck,
+  SlidersHorizontal,
   ShoppingCart,
   Truck,
   Users,
@@ -67,22 +70,46 @@ export const navigationItems: NavigationItem[] = [
     icon: History,
   },
   {
+    label: "Purchase Requests",
+    path: "/purchase-requests",
+    roles: ["ADMINISTRATOR", "INVENTORY_MANAGER", "PROCUREMENT_OFFICER", "DEPARTMENT_REQUESTER", "AUDITOR"],
+    icon: FileText,
+  },
+  {
     label: "Stock Requests",
     path: "/stock-requests",
-    roles: ["ADMINISTRATOR", "WAREHOUSE_OFFICER", "DEPARTMENT_REQUESTER"],
+    roles: ["ADMINISTRATOR", "INVENTORY_MANAGER", "WAREHOUSE_OFFICER", "DEPARTMENT_REQUESTER", "AUDITOR"],
     icon: ClipboardList,
   },
   {
     label: "Purchase Orders",
     path: "/purchase-orders",
-    roles: ["ADMINISTRATOR", "PROCUREMENT_OFFICER", "AUDITOR"],
+    roles: ["ADMINISTRATOR", "PROCUREMENT_OFFICER", "WAREHOUSE_OFFICER", "AUDITOR"],
     icon: ShoppingCart,
   },
   {
     label: "Goods Receiving",
     path: "/goods-receiving",
-    roles: ["ADMINISTRATOR", "WAREHOUSE_OFFICER", "AUDITOR"],
+    roles: ["ADMINISTRATOR", "PROCUREMENT_OFFICER", "WAREHOUSE_OFFICER", "AUDITOR"],
     icon: ClipboardList,
+  },
+  {
+    label: "Stock Transfers",
+    path: "/stock-transfers",
+    roles: ["ADMINISTRATOR", "INVENTORY_MANAGER", "WAREHOUSE_OFFICER", "AUDITOR"],
+    icon: Repeat2,
+  },
+  {
+    label: "Stock Adjustments",
+    path: "/stock-adjustments",
+    roles: ["ADMINISTRATOR", "INVENTORY_MANAGER", "AUDITOR"],
+    icon: SlidersHorizontal,
+  },
+  {
+    label: "Low Stock",
+    path: "/low-stock",
+    roles: ["ADMINISTRATOR", "INVENTORY_MANAGER", "WAREHOUSE_OFFICER", "AUDITOR"],
+    icon: PackageSearch,
   },
   {
     label: "Warehouses",
@@ -96,6 +123,7 @@ export const navigationItems: NavigationItem[] = [
     roles: ["ADMINISTRATOR", "INVENTORY_MANAGER", "PROCUREMENT_OFFICER", "AUDITOR"],
     icon: BarChart3,
   },
+  { label: "Notifications", path: "/notifications", roles: allRoles, icon: Mail },
   {
     label: "Audit Logs",
     path: "/audit-logs",
@@ -105,7 +133,6 @@ export const navigationItems: NavigationItem[] = [
   { label: "Users", path: "/users", roles: ["ADMINISTRATOR"], icon: Users },
   { label: "Departments", path: "/departments", roles: ["ADMINISTRATOR"], icon: Building2 },
   { label: "Settings", path: "/settings", roles: ["ADMINISTRATOR"], icon: Settings },
-  { label: "Controls", path: "/controls", roles: ["ADMINISTRATOR", "AUDITOR"], icon: ShieldCheck },
 ];
 
 export function navigationForRole(role: UserRole): NavigationItem[] {

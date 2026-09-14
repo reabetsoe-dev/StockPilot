@@ -22,11 +22,11 @@ def test_inventory_index_calculates_stock_status_and_value(client):
     assert len(body) == 1
     laptop = body[0]
     assert laptop["sku"] == "LAP-HP-840"
-    assert laptop["total_on_hand"] == 5
+    assert laptop["total_on_hand"] == 9
     assert laptop["total_reserved"] == 1
-    assert laptop["available_quantity"] == 4
-    assert laptop["stock_status"] == "LOW_STOCK"
-    assert Decimal(str(laptop["inventory_value"])) == Decimal("72500.00")
+    assert laptop["available_quantity"] == 8
+    assert laptop["stock_status"] == "NORMAL"
+    assert Decimal(str(laptop["inventory_value"])) == Decimal("130500.00")
 
 
 def test_product_inventory_detail_shows_balances_and_movements(client):
@@ -39,11 +39,13 @@ def test_product_inventory_detail_shows_balances_and_movements(client):
     assert response.status_code == 200
     body = response.json()
     assert body["product"]["sku"] == "LAP-HP-840"
-    assert body["total_on_hand"] == 5
+    assert body["total_on_hand"] == 9
     assert len(body["balances"]) == 3
-    assert sum(balance["quantity_on_hand"] for balance in body["balances"]) == 5
-    assert {movement["movement_type"] for movement in body["recent_movements"]} == {"OPENING_BALANCE"}
-    assert sum(movement["quantity"] for movement in body["recent_movements"]) == 5
+    assert sum(balance["quantity_on_hand"] for balance in body["balances"]) == 9
+    assert {"OPENING_BALANCE", "GOODS_RECEIPT"}.issubset(
+        {movement["movement_type"] for movement in body["recent_movements"]}
+    )
+    assert sum(movement["quantity"] for movement in body["recent_movements"]) == 9
 
 
 def test_stock_movements_can_be_filtered(client):

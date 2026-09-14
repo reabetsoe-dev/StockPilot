@@ -28,6 +28,10 @@ export interface InventoryItem {
   warehouse_count: number;
 }
 
+export interface LowStockItem extends InventoryItem {
+  suggested_reorder_quantity: number;
+}
+
 export interface InventoryBalance {
   id: number;
   warehouse: Warehouse;

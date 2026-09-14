@@ -2,13 +2,27 @@
 
 **Inventory, Procurement & Warehouse Management Platform**
 
-StockPilot is a full-stack business operations platform designed to demonstrate how organizations can manage inventory, procurement, suppliers, warehouses, and stock movement from a centralized system.
+StockPilot is a full-stack business operations platform for managing inventory, suppliers, purchasing, warehouses, stock movements, receiving, internal stock requests, reorder risk, analytics, audit logs, and role-based access from one system.
 
-This repository is being built incrementally. Phase 3 now establishes the platform foundation, catalog layer, and inventory ledger: FastAPI, React, SQLite, SQLAlchemy, authentication, JWT sessions, role-aware navigation, seeded demo accounts, protected frontend routes, dashboard metrics, product categories, products, suppliers, warehouses, inventory balances, stock movements, opening stock, and product stock detail screens.
+It is designed as a professional portfolio project: realistic business workflows, clean FastAPI service architecture, a React enterprise interface, seeded demonstration data, automated tests, and Vercel deployment readiness without paid APIs or paid infrastructure.
+
+## Live Demo
+
+The project is Vercel-ready. Add the production URL here after connecting the repository and configuring the environment variables:
+
+```text
+https://your-stockpilot-vercel-url.vercel.app
+```
 
 ## Business Problem
 
-Many small and medium-sized organizations still manage stock with spreadsheets, paper stock cards, chat messages, and disconnected supplier records. StockPilot is designed to centralize the operational lifecycle from request to procurement, receiving, warehouse inventory, issuing, movement history, and reporting.
+Many small and medium-sized organizations still manage inventory with spreadsheets, paper stock cards, chat messages, and disconnected supplier records. That makes it hard to prevent stock-outs, trace stock changes, understand supplier activity, or know which purchase orders and requests are still active.
+
+StockPilot centralizes the lifecycle:
+
+```text
+Supplier -> Purchase Request -> Approval -> Purchase Order -> Goods Receipt -> Warehouse Inventory -> Stock Issue / Transfer -> Analytics
+```
 
 ## Demo Credentials
 
@@ -23,24 +37,31 @@ All demo users use the password `Demo123!`.
 | Department Requester | `requester@stockpilot.local` |
 | Auditor | `auditor@stockpilot.local` |
 
-## Implemented Features
+The seed creates 20 fictional users across the same roles for a populated demo.
 
-- FastAPI backend with SQLAlchemy models for users, departments, and audit logs.
-- SQLite local database with Turso/libSQL-ready configuration for later Vercel deployment.
+## Features
+
 - JWT authentication with bcrypt password hashing.
-- Backend role authorization for administrator-only user and department management.
-- Seeded fictional organization: StockPilot Distribution Ltd.
-- Catalog models and APIs for categories, products, suppliers, and warehouses.
-- Seeded catalog data: 8 categories, 12 suppliers, 3 warehouses, and 50 realistic products.
-- Backend uniqueness validation for SKU, barcode, supplier code, warehouse code, and category names.
-- InventoryBalance and StockMovement models for per-warehouse stock tracking.
-- Seeded opening balances across Central, North, and Retail warehouses with traceable OPENING_BALANCE movements.
-- Backend-calculated available quantity, stock status, and inventory valuation.
-- Inventory index, product stock detail, and stock movement history screens.
-- React, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query, Recharts, and Lucide React.
-- Professional login screen, protected routes, app layout, theme toggle, role-aware sidebar foundation, dashboard, user list, department view, product table, category cards, supplier register, warehouse directory, inventory table, and ledger view.
-- Backend pytest coverage for authentication, RBAC, catalog permissions, inventory calculations, movement filtering, and inventory authorization.
-- Frontend Vitest coverage for login rendering and role-based navigation.
+- Backend role authorization for administrators, inventory managers, procurement officers, warehouse officers, department requesters, and auditors.
+- User, department, category, product, supplier, and warehouse management.
+- Per-warehouse `InventoryBalance` records with backend-calculated available stock and valuation.
+- Traceable `StockMovement` ledger for opening balances, goods receipts, stock issues, transfers, adjustments, and returns.
+- Product stock detail pages with warehouse balances and recent movement history.
+- Purchase requests with draft, submit, approve, and reject actions.
+- Purchase orders with backend-calculated line totals, subtotal, tax, and total.
+- Goods receiving with partial receipt support, PO quantity updates, inventory increases, and movement records.
+- Internal stock requests with approval and stock issuing.
+- Warehouse transfers with dispatch, receipt, source stock validation, and transfer movement history.
+- Stock adjustments with required reasons and audit logging.
+- Low-stock page with deterministic suggested reorder quantity.
+- Analytics dashboards for inventory value, low stock, open purchase orders, goods receipts, transfers, supplier purchase value, and top purchased products.
+- Internal notifications and notification inbox.
+- Audit log viewer with search.
+- Global search across products, SKUs, suppliers, warehouses, purchase requests, and purchase orders.
+- Light and dark mode.
+- Seed/reset commands for fictional demonstration data.
+- GitHub Actions for backend tests, frontend lint, frontend tests, and production build.
+- Vercel FastAPI entry point and SPA routing support.
 
 ## Technology Stack
 
@@ -48,7 +69,7 @@ Frontend: React, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query, R
 
 Backend: Python, FastAPI, SQLAlchemy, Pydantic, JWT, bcrypt.
 
-Database: SQLite locally. Turso/libSQL support is prepared through environment variables.
+Database: SQLite locally. Turso/libSQL is supported for production through environment variables.
 
 ## Local Development
 
@@ -71,6 +92,22 @@ npm install
 npm run dev
 ```
 
+Default local URLs:
+
+- Frontend: `http://127.0.0.1:5173`
+- Backend: `http://127.0.0.1:8000`
+- Swagger: `http://127.0.0.1:8000/docs`
+- ReDoc: `http://127.0.0.1:8000/redoc`
+
+## Demo Reset
+
+To rebuild the local SQLite demo database from fictional seed data:
+
+```bash
+cd backend
+python -m app.seed.reset_demo
+```
+
 ## Testing
 
 Backend:
@@ -89,21 +126,27 @@ npm test
 npm run build
 ```
 
-## API Documentation
+## Deployment
 
-When the backend is running locally:
+The repository includes:
 
-- Swagger: `http://127.0.0.1:8000/docs`
-- ReDoc: `http://127.0.0.1:8000/redoc`
+- `vercel.json` using Vercel Services for a Vite frontend service and FastAPI backend service.
+- `backend/app/main.py` as the FastAPI backend service entry point.
+- `api/index.py` as a classic Python runtime shim if deploying outside the Services setup.
+- `backend/requirements.txt` and root `requirements.txt` for Python dependencies.
+- `frontend/package.json` for the Vite build.
 
-## Vercel Deployment
+Production should use Turso/libSQL or another SQLite-compatible serverless database. Do not rely on a local SQLite file inside a Vercel function for production persistence.
 
-The repository includes a Vercel Services configuration for one project with a Vite frontend service and FastAPI backend service. Production persistence should use Turso/libSQL through:
+Required production environment variables:
 
 ```text
+ENVIRONMENT=production
 TURSO_DATABASE_URL=
 TURSO_AUTH_TOKEN=
 JWT_SECRET_KEY=
+FRONTEND_URL=
+CORS_ORIGINS=
 ```
 
 ## Documentation
@@ -113,15 +156,46 @@ JWT_SECRET_KEY=
 - [Inventory Engine](docs/inventory-engine.md)
 - [Procurement Flow](docs/procurement-flow.md)
 - [Deployment](docs/deployment.md)
+- [Screenshots](docs/screenshots/README.md)
 
-## Screenshots
+## Project Structure
 
-Screenshot placeholders are prepared in `docs/screenshots/`. Real screenshots should be added after each feature phase is visually complete.
+```text
+StockPilot/
+  api/
+  backend/
+    app/
+      api/
+      core/
+      models/
+      schemas/
+      seed/
+      services/
+    tests/
+  docs/
+  frontend/
+    src/
+      components/
+      hooks/
+      layouts/
+      pages/
+      services/
+      types/
+      utils/
+```
+
+## Security
+
+StockPilot uses JWT sessions, hashed passwords, backend authorization checks, Pydantic validation, SQLAlchemy ORM queries, environment-based secrets, and configurable CORS. No database secret is exposed to browser code.
 
 ## Limitations
 
-Phase 3 does not yet implement purchase requests, purchase orders, goods receipts, stock issues, transfers, stock adjustments, a dedicated low-stock/reorder page, or procurement analytics. Those are planned in later phases.
+Version 1 intentionally avoids AI, paid APIs, background workers, email delivery, accounting integrations, barcode hardware integrations, and complex workflow engines. The project focuses on deterministic inventory and procurement business logic.
 
 ## Future Improvements
 
-Future phases will add the procurement lifecycle, receiving, stock issue, transfer logic, low-stock/reorder suggestions, analytics, audit views, and production database verification.
+Demand forecasting, barcode scanner integration, supplier portal, email notifications, invoice matching, purchase budgets, a mobile warehouse app, multi-company support, accounting integration, and predictive inventory planning are documented future directions.
+
+## License
+
+MIT

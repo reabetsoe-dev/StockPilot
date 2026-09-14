@@ -2,15 +2,26 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import { useAuth } from "./hooks/useAuth";
 import { AppLayout } from "./layouts/AppLayout";
+import { AnalyticsPage } from "./pages/AnalyticsPage";
+import { AuditLogsPage } from "./pages/AuditLogsPage";
 import { CategoriesPage } from "./pages/CategoriesPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { DepartmentsPage } from "./pages/DepartmentsPage";
+import { GoodsReceivingPage } from "./pages/GoodsReceivingPage";
 import { InventoryPage } from "./pages/InventoryPage";
+import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
-import { PlaceholderPage } from "./pages/PlaceholderPage";
+import { LowStockPage } from "./pages/LowStockPage";
+import { NotificationsPage } from "./pages/NotificationsPage";
 import { ProductsPage } from "./pages/ProductsPage";
 import { ProductStockDetailsPage } from "./pages/ProductStockDetailsPage";
+import { PurchaseOrdersPage } from "./pages/PurchaseOrdersPage";
+import { PurchaseRequestsPage } from "./pages/PurchaseRequestsPage";
+import { SettingsPage } from "./pages/SettingsPage";
+import { StockAdjustmentsPage } from "./pages/StockAdjustmentsPage";
 import { StockMovementsPage } from "./pages/StockMovementsPage";
+import { StockRequestsPage } from "./pages/StockRequestsPage";
+import { StockTransfersPage } from "./pages/StockTransfersPage";
 import { SuppliersPage } from "./pages/SuppliersPage";
 import { UsersPage } from "./pages/UsersPage";
 import { WarehousesPage } from "./pages/WarehousesPage";
@@ -38,6 +49,7 @@ function ProtectedRoute({ children }: { children: JSX.Element }) {
 export default function App() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route
         element={
@@ -46,7 +58,6 @@ export default function App() {
           </ProtectedRoute>
         }
       >
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/departments" element={<DepartmentsPage />} />
@@ -57,15 +68,19 @@ export default function App() {
         <Route path="/inventory" element={<InventoryPage />} />
         <Route path="/inventory/:productId" element={<ProductStockDetailsPage />} />
         <Route path="/stock-movements" element={<StockMovementsPage />} />
-        <Route path="/stock-requests" element={<PlaceholderPage title="Stock requests" />} />
-        <Route path="/purchase-orders" element={<PlaceholderPage title="Purchase orders" />} />
-        <Route path="/goods-receiving" element={<PlaceholderPage title="Goods receiving" />} />
-        <Route path="/analytics" element={<PlaceholderPage title="Analytics" />} />
-        <Route path="/audit-logs" element={<PlaceholderPage title="Audit logs" />} />
-        <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
-        <Route path="/controls" element={<PlaceholderPage title="Controls" />} />
+        <Route path="/purchase-requests" element={<PurchaseRequestsPage />} />
+        <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+        <Route path="/goods-receiving" element={<GoodsReceivingPage />} />
+        <Route path="/stock-requests" element={<StockRequestsPage />} />
+        <Route path="/stock-transfers" element={<StockTransfersPage />} />
+        <Route path="/stock-adjustments" element={<StockAdjustmentsPage />} />
+        <Route path="/low-stock" element={<LowStockPage />} />
+        <Route path="/analytics" element={<AnalyticsPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/audit-logs" element={<AuditLogsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Route>
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

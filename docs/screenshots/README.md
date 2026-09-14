@@ -1,6 +1,6 @@
 # Screenshots
 
-Add real screenshots after each interface is implemented and reviewed.
+Add real screenshots after the deployed demo is visually reviewed.
 
 Planned screenshots:
 
@@ -13,3 +13,5 @@ Planned screenshots:
 - Stock Transfers
 - Low Stock
 - Analytics
+- Notifications
+- Audit Logs

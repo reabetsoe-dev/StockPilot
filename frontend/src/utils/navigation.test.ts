@@ -12,6 +12,12 @@ describe("navigationForRole", () => {
     expect(labels).toContain("Suppliers");
     expect(labels).toContain("Warehouses");
     expect(labels).toContain("Stock Movements");
+    expect(labels).toContain("Purchase Requests");
+    expect(labels).toContain("Purchase Orders");
+    expect(labels).toContain("Goods Receiving");
+    expect(labels).toContain("Stock Transfers");
+    expect(labels).toContain("Stock Adjustments");
+    expect(labels).toContain("Low Stock");
   });
 
   it("keeps auditors read-oriented", () => {
@@ -20,6 +26,10 @@ describe("navigationForRole", () => {
     expect(labels).toContain("Audit Logs");
     expect(labels).toContain("Products");
     expect(labels).toContain("Stock Movements");
+    expect(labels).toContain("Purchase Orders");
+    expect(labels).toContain("Goods Receiving");
+    expect(labels).toContain("Stock Transfers");
+    expect(labels).toContain("Low Stock");
     expect(labels).not.toContain("Users");
     expect(labels).not.toContain("Departments");
   });
@@ -32,7 +42,11 @@ describe("navigationForRole", () => {
     expect(inventoryLabels).toContain("Categories");
     expect(inventoryLabels).toContain("Warehouses");
     expect(inventoryLabels).toContain("Stock Movements");
+    expect(inventoryLabels).toContain("Stock Adjustments");
+    expect(inventoryLabels).toContain("Low Stock");
     expect(procurementLabels).toContain("Suppliers");
     expect(procurementLabels).toContain("Products");
+    expect(procurementLabels).toContain("Purchase Orders");
+    expect(procurementLabels).toContain("Goods Receiving");
   });
 });
