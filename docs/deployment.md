@@ -48,6 +48,8 @@ CORS_ORIGINS=
 
 SQLite remains the default for local development. Production persistence should use Turso/libSQL because a local SQLite file inside a serverless function is not durable.
 
+For portfolio review deployments without Turso, the backend uses `/tmp/stockpilot.db` and seeds demo data on cold start. That keeps the live demo usable, but the data is ephemeral and should not be treated as durable production storage.
+
 ## GitHub Actions
 
 `.github/workflows/ci.yml` runs on push and pull request:

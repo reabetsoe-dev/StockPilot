@@ -26,15 +26,32 @@ from app.api import (
     warehouses,
 )
 from app.core.config import get_settings
-from app.core.database import init_db
+from app.core.database import SessionLocal, init_db
 
 settings = get_settings()
+
+
+def ensure_demo_seeded() -> None:
+    from sqlalchemy import select
+
+    from app.models.user import User
+    from app.seed.seed_data import seed_demo_data
+
+    db = SessionLocal()
+    try:
+        has_users = db.scalar(select(User.id).limit(1))
+        if has_users is None:
+            seed_demo_data(db)
+    finally:
+        db.close()
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     if settings.environment != "test":
         init_db()
+        if settings.running_on_vercel and not settings.turso_database_url:
+            ensure_demo_seeded()
     yield
 
 

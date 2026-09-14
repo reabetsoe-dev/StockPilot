@@ -138,6 +138,8 @@ The repository includes:
 
 Production should use Turso/libSQL or another SQLite-compatible serverless database. Do not rely on a local SQLite file inside a Vercel function for production persistence.
 
+If Turso variables are omitted on Vercel, the backend falls back to an ephemeral `/tmp/stockpilot.db` and auto-seeds demo data so reviewers can open the live portfolio. Use Turso/libSQL for durable production persistence.
+
 Required production environment variables:
 
 ```text

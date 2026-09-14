@@ -29,6 +29,9 @@ def build_database_url() -> str:
         separator = "&" if "?" in configured_url else "?"
         return f"sqlite+{configured_url}{separator}secure=true"
 
+    if settings.running_on_vercel and configured_url == "sqlite:///./stockpilot.db":
+        return "sqlite:////tmp/stockpilot.db"
+
     return configured_url
 
 
