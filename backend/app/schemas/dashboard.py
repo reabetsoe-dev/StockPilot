@@ -11,6 +11,10 @@ class DashboardSummary(BaseModel):
     active_users: int
     departments: int
     demo_accounts: int
+    categories: int
+    products: int
+    suppliers: int
+    warehouses: int
     role_counts: list[RoleCount]
     implementation_phase: str
     readiness_score: int

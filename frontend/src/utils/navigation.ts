@@ -4,7 +4,9 @@ import {
   ClipboardList,
   FileClock,
   LayoutDashboard,
+  Layers3,
   PackageSearch,
+  PackagePlus,
   Settings,
   ShieldCheck,
   ShoppingCart,
@@ -34,6 +36,24 @@ const allRoles: UserRole[] = [
 export const navigationItems: NavigationItem[] = [
   { label: "Dashboard", path: "/dashboard", roles: allRoles, icon: LayoutDashboard },
   {
+    label: "Products",
+    path: "/products",
+    roles: ["ADMINISTRATOR", "INVENTORY_MANAGER", "PROCUREMENT_OFFICER", "WAREHOUSE_OFFICER", "DEPARTMENT_REQUESTER", "AUDITOR"],
+    icon: PackagePlus,
+  },
+  {
+    label: "Categories",
+    path: "/categories",
+    roles: ["ADMINISTRATOR", "INVENTORY_MANAGER", "AUDITOR"],
+    icon: Layers3,
+  },
+  {
+    label: "Suppliers",
+    path: "/suppliers",
+    roles: ["ADMINISTRATOR", "PROCUREMENT_OFFICER", "INVENTORY_MANAGER", "AUDITOR"],
+    icon: Truck,
+  },
+  {
     label: "Inventory",
     path: "/inventory",
     roles: ["ADMINISTRATOR", "INVENTORY_MANAGER", "WAREHOUSE_OFFICER", "AUDITOR"],
@@ -55,7 +75,7 @@ export const navigationItems: NavigationItem[] = [
     label: "Goods Receiving",
     path: "/goods-receiving",
     roles: ["ADMINISTRATOR", "WAREHOUSE_OFFICER", "AUDITOR"],
-    icon: Truck,
+    icon: ClipboardList,
   },
   {
     label: "Warehouses",

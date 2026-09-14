@@ -4,7 +4,7 @@
 
 StockPilot is a full-stack business operations platform designed to demonstrate how organizations can manage inventory, procurement, suppliers, warehouses, and stock movement from a centralized system.
 
-This repository is being built incrementally. Phase 1 establishes the platform foundation: FastAPI, React, SQLite, SQLAlchemy, authentication, JWT sessions, role-aware navigation, seeded demo accounts, protected frontend routes, and a dashboard that reads from the backend.
+This repository is being built incrementally. Phase 2 now establishes the platform foundation and catalog layer: FastAPI, React, SQLite, SQLAlchemy, authentication, JWT sessions, role-aware navigation, seeded demo accounts, protected frontend routes, dashboard metrics, product categories, products, suppliers, warehouses, and product management screens.
 
 ## Business Problem
 
@@ -23,16 +23,19 @@ All demo users use the password `Demo123!`.
 | Department Requester | `requester@stockpilot.local` |
 | Auditor | `auditor@stockpilot.local` |
 
-## Phase 1 Features
+## Implemented Features
 
 - FastAPI backend with SQLAlchemy models for users, departments, and audit logs.
 - SQLite local database with Turso/libSQL-ready configuration for later Vercel deployment.
 - JWT authentication with bcrypt password hashing.
 - Backend role authorization for administrator-only user and department management.
 - Seeded fictional organization: StockPilot Distribution Ltd.
+- Catalog models and APIs for categories, products, suppliers, and warehouses.
+- Seeded catalog data: 8 categories, 12 suppliers, 3 warehouses, and 50 realistic products.
+- Backend uniqueness validation for SKU, barcode, supplier code, warehouse code, and category names.
 - React, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query, Recharts, and Lucide React.
-- Professional login screen, protected routes, app layout, theme toggle, role-aware sidebar foundation, dashboard, user list, and department view.
-- Backend pytest coverage for authentication and RBAC.
+- Professional login screen, protected routes, app layout, theme toggle, role-aware sidebar foundation, dashboard, user list, department view, product table, category cards, supplier register, and warehouse directory.
+- Backend pytest coverage for authentication, RBAC, and catalog permissions.
 - Frontend Vitest coverage for login rendering and role-based navigation.
 
 ## Technology Stack
@@ -113,7 +116,7 @@ Screenshot placeholders are prepared in `docs/screenshots/`. Real screenshots sh
 
 ## Limitations
 
-Phase 1 does not yet implement product catalogs, inventory balances, stock movements, purchase requests, purchase orders, goods receipts, transfers, low-stock logic, or procurement analytics. Those are planned in later phases.
+Phase 2 does not yet implement inventory balances, stock movements, purchase requests, purchase orders, goods receipts, transfers, low-stock logic, or procurement analytics. Those are planned in later phases.
 
 ## Future Improvements
 

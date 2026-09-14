@@ -1,4 +1,4 @@
-import { Building2, CheckCircle2, ShieldCheck, Users } from "lucide-react";
+import { Building2, CheckCircle2, PackagePlus, ShieldCheck, Tags, Truck, Users, Warehouse } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 
@@ -29,8 +29,8 @@ export function DashboardPage() {
               {data?.organization ?? "StockPilot Distribution Ltd"}
             </h1>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600 dark:text-slate-300">
-              Phase 1 establishes secure access, seeded departments, role-aware navigation,
-              and a clean foundation for the inventory ledger and procurement lifecycle.
+              Secure access, role-aware navigation, user administration, and catalog master data now anchor the
+              inventory ledger and procurement lifecycle.
             </p>
           </div>
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
@@ -42,7 +42,14 @@ export function DashboardPage() {
 
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Active users" value={isLoading ? "..." : data?.active_users ?? 0} tone="emerald" icon={Users} />
-        <StatCard label="Departments" value={isLoading ? "..." : data?.departments ?? 0} tone="blue" icon={Building2} />
+        <StatCard label="Products" value={isLoading ? "..." : data?.products ?? 0} tone="blue" icon={PackagePlus} />
+        <StatCard label="Suppliers" value={isLoading ? "..." : data?.suppliers ?? 0} tone="amber" icon={Truck} />
+        <StatCard label="Warehouses" value={isLoading ? "..." : data?.warehouses ?? 0} tone="slate" icon={Warehouse} />
+      </section>
+
+      <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Departments" value={isLoading ? "..." : data?.departments ?? 0} tone="emerald" icon={Building2} />
+        <StatCard label="Categories" value={isLoading ? "..." : data?.categories ?? 0} tone="blue" icon={Tags} />
         <StatCard label="Demo accounts" value={isLoading ? "..." : data?.demo_accounts ?? 0} tone="amber" icon={ShieldCheck} />
         <StatCard label="Foundation modules" value={isLoading ? "..." : data?.enabled_modules.length ?? 0} tone="slate" icon={CheckCircle2} />
       </section>

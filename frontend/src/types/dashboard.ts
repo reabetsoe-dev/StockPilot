@@ -8,6 +8,10 @@ export interface DashboardSummary {
   active_users: number;
   departments: number;
   demo_accounts: number;
+  categories: number;
+  products: number;
+  suppliers: number;
+  warehouses: number;
   role_counts: RoleCount[];
   implementation_phase: string;
   readiness_score: number;

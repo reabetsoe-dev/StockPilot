@@ -2,11 +2,15 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import { useAuth } from "./hooks/useAuth";
 import { AppLayout } from "./layouts/AppLayout";
+import { CategoriesPage } from "./pages/CategoriesPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { DepartmentsPage } from "./pages/DepartmentsPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
+import { ProductsPage } from "./pages/ProductsPage";
+import { SuppliersPage } from "./pages/SuppliersPage";
 import { UsersPage } from "./pages/UsersPage";
+import { WarehousesPage } from "./pages/WarehousesPage";
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   const { isAuthenticated, loading } = useAuth();
@@ -43,11 +47,14 @@ export default function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/departments" element={<DepartmentsPage />} />
+        <Route path="/products" element={<ProductsPage />} />
+        <Route path="/categories" element={<CategoriesPage />} />
+        <Route path="/suppliers" element={<SuppliersPage />} />
+        <Route path="/warehouses" element={<WarehousesPage />} />
         <Route path="/inventory" element={<PlaceholderPage title="Inventory" />} />
         <Route path="/stock-requests" element={<PlaceholderPage title="Stock requests" />} />
         <Route path="/purchase-orders" element={<PlaceholderPage title="Purchase orders" />} />
         <Route path="/goods-receiving" element={<PlaceholderPage title="Goods receiving" />} />
-        <Route path="/warehouses" element={<PlaceholderPage title="Warehouses" />} />
         <Route path="/analytics" element={<PlaceholderPage title="Analytics" />} />
         <Route path="/audit-logs" element={<PlaceholderPage title="Audit logs" />} />
         <Route path="/settings" element={<PlaceholderPage title="Settings" />} />

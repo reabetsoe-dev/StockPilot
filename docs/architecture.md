@@ -10,4 +10,4 @@ flowchart TD
     Backend --> DB[(SQLite locally / Turso in production)]
 ```
 
-Phase 1 focuses on authentication, role-aware navigation, seeded users, departments, and a backend-driven dashboard. Business logic will continue moving into service modules as inventory and procurement features are added.
+Phase 2 adds the catalog master data used by later inventory and procurement flows: categories, products, suppliers, and warehouses. Business logic will continue moving into service modules as stock balances, purchase requests, purchase orders, receiving, and transfers are added.

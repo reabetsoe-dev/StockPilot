@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, dashboard, departments, users
+from app.api import auth, categories, dashboard, departments, products, suppliers, users, warehouses
 from app.core.config import get_settings
 from app.core.database import init_db
 
@@ -33,9 +33,13 @@ app.add_middleware(
 )
 
 app.include_router(auth.router, prefix="/api")
+app.include_router(categories.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
 app.include_router(departments.router, prefix="/api")
+app.include_router(products.router, prefix="/api")
+app.include_router(suppliers.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
+app.include_router(warehouses.router, prefix="/api")
 
 
 @app.get("/api/health", tags=["System"])
