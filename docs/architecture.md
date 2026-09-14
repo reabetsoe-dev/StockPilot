@@ -10,4 +10,4 @@ flowchart TD
     Backend --> DB[(SQLite locally / Turso in production)]
 ```
 
-Phase 2 adds the catalog master data used by later inventory and procurement flows: categories, products, suppliers, and warehouses. Business logic will continue moving into service modules as stock balances, purchase requests, purchase orders, receiving, and transfers are added.
+Phase 3 adds the inventory ledger used by later procurement and warehouse flows: per-warehouse balances, opening stock movements, backend stock status, and backend inventory valuation. Business logic will continue moving into service modules as purchase requests, purchase orders, receiving, issues, and transfers are added.

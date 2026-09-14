@@ -15,6 +15,10 @@ class DashboardSummary(BaseModel):
     products: int
     suppliers: int
     warehouses: int
+    inventory_value: float
+    low_stock_items: int
+    out_of_stock_items: int
+    stock_movements: int
     role_counts: list[RoleCount]
     implementation_phase: str
     readiness_score: int

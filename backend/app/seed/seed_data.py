@@ -10,6 +10,7 @@ from app.models.supplier import Supplier
 from app.models.user import User, UserRole
 from app.models.warehouse import Warehouse
 from app.services.audit_service import record_audit_log
+from app.services.inventory_service import record_opening_balance
 
 DEMO_PASSWORD = "Demo123!"
 
@@ -121,6 +122,15 @@ PRODUCTS = [
     ("PACK-CARTON-M", "100000000050", "Medium Shipping Carton", "Standard medium carton for dispatch.", "Office Supplies", "Each", "18.00", "32.00", 100, "SUP-1012"),
 ]
 
+OPENING_STOCK_OVERRIDES: dict[str, list[tuple[str, int, int]]] = {
+    "LAP-HP-840": [("CENTRAL", 4, 1), ("NORTH", 1, 0), ("RETAIL", 0, 0)],
+    "NET-SW-24": [("CENTRAL", 2, 0), ("NORTH", 0, 0), ("RETAIL", 0, 0)],
+    "NET-RACK-12U": [("CENTRAL", 0, 0), ("NORTH", 0, 0), ("RETAIL", 0, 0)],
+    "TBL-MEET-8": [("CENTRAL", 0, 0), ("NORTH", 0, 0), ("RETAIL", 0, 0)],
+    "VEH-BAT-12V": [("CENTRAL", 2, 0), ("NORTH", 0, 0), ("RETAIL", 0, 0)],
+    "TOOL-PALLET-JACK": [("CENTRAL", 1, 0), ("NORTH", 0, 0), ("RETAIL", 0, 0)],
+}
+
 
 def seed_departments(db: Session) -> dict[str, Department]:
     departments: dict[str, Department] = {}
@@ -224,27 +234,28 @@ def seed_suppliers(db: Session) -> dict[str, Supplier]:
     return suppliers
 
 
-def seed_products(db: Session, categories: dict[str, Category], suppliers: dict[str, Supplier]) -> None:
+def seed_products(db: Session, categories: dict[str, Category], suppliers: dict[str, Supplier]) -> dict[str, Product]:
+    products: dict[str, Product] = {}
     for sku, barcode, name, description, category_name, unit, cost_price, selling_price, reorder_level, supplier_code in PRODUCTS:
         product = db.scalar(select(Product).where(Product.sku == sku))
         category = categories[category_name]
         supplier = suppliers[supplier_code]
         if product is None:
-            db.add(
-                Product(
-                    sku=sku,
-                    barcode=barcode,
-                    name=name,
-                    description=description,
-                    category_id=category.id,
-                    unit_of_measure=unit,
-                    cost_price=cost_price,
-                    selling_price=selling_price,
-                    reorder_level=reorder_level,
-                    preferred_supplier_id=supplier.id,
-                    active=True,
-                )
+            product = Product(
+                sku=sku,
+                barcode=barcode,
+                name=name,
+                description=description,
+                category_id=category.id,
+                unit_of_measure=unit,
+                cost_price=cost_price,
+                selling_price=selling_price,
+                reorder_level=reorder_level,
+                preferred_supplier_id=supplier.id,
+                active=True,
             )
+            db.add(product)
+            db.flush()
         else:
             product.barcode = barcode
             product.name = name
@@ -256,17 +267,57 @@ def seed_products(db: Session, categories: dict[str, Category], suppliers: dict[
             product.reorder_level = reorder_level
             product.preferred_supplier_id = supplier.id
             product.active = True
+        products[sku] = product
+    return products
+
+
+def opening_stock_rows(sku: str, index: int, reorder_level: int) -> list[tuple[str, int, int]]:
+    if sku in OPENING_STOCK_OVERRIDES:
+        return OPENING_STOCK_OVERRIDES[sku]
+
+    central = reorder_level * 3 + 18 + (index % 9) * 4
+    north = reorder_level + 8 + (index % 6) * 3
+    retail = max(0, (reorder_level // 2) + (index % 5) * 2)
+    reserved_seed = index % 4
+    central_reserved = min(reserved_seed, central)
+    north_reserved = min(1 if index % 7 == 0 else 0, north)
+    return [
+        ("CENTRAL", central, central_reserved),
+        ("NORTH", north, north_reserved),
+        ("RETAIL", retail, 0),
+    ]
+
+
+def seed_opening_inventory(
+    db: Session,
+    products: dict[str, Product],
+    warehouses: dict[str, Warehouse],
+    actor: User | None,
+) -> None:
+    reorder_levels = {sku: reorder_level for sku, _, _, _, _, _, _, _, reorder_level, _ in PRODUCTS}
+    for index, (sku, *_rest) in enumerate(PRODUCTS, start=1):
+        product = products[sku]
+        for warehouse_code, quantity_on_hand, quantity_reserved in opening_stock_rows(sku, index, reorder_levels[sku]):
+            record_opening_balance(
+                db,
+                product,
+                warehouses[warehouse_code],
+                quantity_on_hand,
+                quantity_reserved,
+                actor,
+            )
 
 
 def seed_demo_data(db: Session) -> None:
     departments = seed_departments(db)
     seed_users(db, departments)
     categories = seed_categories(db)
-    seed_warehouses(db)
+    warehouses = seed_warehouses(db)
     suppliers = seed_suppliers(db)
-    seed_products(db, categories, suppliers)
+    products = seed_products(db, categories, suppliers)
     db.flush()
     admin = db.scalar(select(User).where(User.email == "admin@stockpilot.local"))
+    seed_opening_inventory(db, products, warehouses, admin)
     record_audit_log(
         db,
         admin,
@@ -283,7 +334,7 @@ def main() -> None:
     db = SessionLocal()
     try:
         seed_demo_data(db)
-        print("StockPilot demo accounts, departments, and catalog records seeded.")
+        print("StockPilot demo accounts, catalog records, and opening stock ledger seeded.")
     finally:
         db.close()
 

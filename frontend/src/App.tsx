@@ -5,9 +5,12 @@ import { AppLayout } from "./layouts/AppLayout";
 import { CategoriesPage } from "./pages/CategoriesPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { DepartmentsPage } from "./pages/DepartmentsPage";
+import { InventoryPage } from "./pages/InventoryPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { ProductsPage } from "./pages/ProductsPage";
+import { ProductStockDetailsPage } from "./pages/ProductStockDetailsPage";
+import { StockMovementsPage } from "./pages/StockMovementsPage";
 import { SuppliersPage } from "./pages/SuppliersPage";
 import { UsersPage } from "./pages/UsersPage";
 import { WarehousesPage } from "./pages/WarehousesPage";
@@ -51,7 +54,9 @@ export default function App() {
         <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/suppliers" element={<SuppliersPage />} />
         <Route path="/warehouses" element={<WarehousesPage />} />
-        <Route path="/inventory" element={<PlaceholderPage title="Inventory" />} />
+        <Route path="/inventory" element={<InventoryPage />} />
+        <Route path="/inventory/:productId" element={<ProductStockDetailsPage />} />
+        <Route path="/stock-movements" element={<StockMovementsPage />} />
         <Route path="/stock-requests" element={<PlaceholderPage title="Stock requests" />} />
         <Route path="/purchase-orders" element={<PlaceholderPage title="Purchase orders" />} />
         <Route path="/goods-receiving" element={<PlaceholderPage title="Goods receiving" />} />

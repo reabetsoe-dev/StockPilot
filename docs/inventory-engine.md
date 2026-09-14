@@ -1,16 +1,28 @@
 # Inventory Engine
 
-The inventory engine will be implemented after the platform foundation.
+Phase 3 introduces the first real inventory ledger slice.
 
-Design principles:
+Implemented principles:
 
-- Quantities will be stored per product and warehouse in `InventoryBalance`.
-- Every quantity change will create a `StockMovement`.
-- Goods receipts, stock issues, transfers, and adjustments will be transaction-safe.
-- Stock must never become negative.
-- Totals and available quantity will be calculated by the backend.
+- Quantities are stored per product and warehouse in `InventoryBalance`.
+- Available quantity is calculated as `quantity_on_hand - quantity_reserved`.
+- Every seeded opening stock quantity creates an `OPENING_BALANCE` `StockMovement`.
+- Inventory value is calculated by the backend as `quantity_on_hand * cost_price`.
+- Stock status is calculated by the backend as `NORMAL`, `LOW_STOCK`, or `OUT_OF_STOCK`.
+- Stock quantities should not be changed directly without a matching movement record.
 
-Example future transaction flow:
+Current opening stock flow:
+
+```text
+Seed product and warehouse records
+Find or create InventoryBalance
+Create OPENING_BALANCE StockMovement
+Increase quantity_on_hand
+Set seeded reserved quantity
+Commit seeded demo ledger
+```
+
+Future transaction flow:
 
 ```text
 Goods receipt created

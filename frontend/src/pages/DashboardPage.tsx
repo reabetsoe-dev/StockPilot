@@ -1,11 +1,23 @@
-import { Building2, CheckCircle2, PackagePlus, ShieldCheck, Tags, Truck, Users, Warehouse } from "lucide-react";
+import {
+  Activity,
+  AlertTriangle,
+  Building2,
+  CheckCircle2,
+  PackagePlus,
+  PackageX,
+  ShieldCheck,
+  Tags,
+  Truck,
+  Users,
+  Warehouse,
+} from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 
 import { StatCard } from "../components/StatCard";
 import { api } from "../services/api";
 import type { DashboardSummary } from "../types/dashboard";
-import { roleLabel } from "../utils/format";
+import { formatMoney, roleLabel } from "../utils/format";
 
 export function DashboardPage() {
   const { data, isLoading } = useQuery({
@@ -30,7 +42,7 @@ export function DashboardPage() {
             </h1>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600 dark:text-slate-300">
               Secure access, role-aware navigation, user administration, and catalog master data now anchor the
-              inventory ledger and procurement lifecycle.
+              backend stock ledger, opening balances, valuation, and procurement lifecycle.
             </p>
           </div>
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
@@ -41,17 +53,24 @@ export function DashboardPage() {
       </section>
 
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Active users" value={isLoading ? "..." : data?.active_users ?? 0} tone="emerald" icon={Users} />
+        <StatCard label="Inventory value" value={isLoading ? "..." : formatMoney(data?.inventory_value ?? 0)} tone="emerald" icon={Activity} />
         <StatCard label="Products" value={isLoading ? "..." : data?.products ?? 0} tone="blue" icon={PackagePlus} />
-        <StatCard label="Suppliers" value={isLoading ? "..." : data?.suppliers ?? 0} tone="amber" icon={Truck} />
-        <StatCard label="Warehouses" value={isLoading ? "..." : data?.warehouses ?? 0} tone="slate" icon={Warehouse} />
+        <StatCard label="Low stock" value={isLoading ? "..." : data?.low_stock_items ?? 0} tone="amber" icon={AlertTriangle} />
+        <StatCard label="Out of stock" value={isLoading ? "..." : data?.out_of_stock_items ?? 0} tone="slate" icon={PackageX} />
       </section>
 
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Departments" value={isLoading ? "..." : data?.departments ?? 0} tone="emerald" icon={Building2} />
-        <StatCard label="Categories" value={isLoading ? "..." : data?.categories ?? 0} tone="blue" icon={Tags} />
+        <StatCard label="Warehouses" value={isLoading ? "..." : data?.warehouses ?? 0} tone="emerald" icon={Warehouse} />
+        <StatCard label="Stock movements" value={isLoading ? "..." : data?.stock_movements ?? 0} tone="blue" icon={Activity} />
+        <StatCard label="Suppliers" value={isLoading ? "..." : data?.suppliers ?? 0} tone="amber" icon={Truck} />
+        <StatCard label="Categories" value={isLoading ? "..." : data?.categories ?? 0} tone="slate" icon={Tags} />
+      </section>
+
+      <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Active users" value={isLoading ? "..." : data?.active_users ?? 0} tone="emerald" icon={Users} />
+        <StatCard label="Departments" value={isLoading ? "..." : data?.departments ?? 0} tone="blue" icon={Building2} />
         <StatCard label="Demo accounts" value={isLoading ? "..." : data?.demo_accounts ?? 0} tone="amber" icon={ShieldCheck} />
-        <StatCard label="Foundation modules" value={isLoading ? "..." : data?.enabled_modules.length ?? 0} tone="slate" icon={CheckCircle2} />
+        <StatCard label="Enabled modules" value={isLoading ? "..." : data?.enabled_modules.length ?? 0} tone="slate" icon={CheckCircle2} />
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">

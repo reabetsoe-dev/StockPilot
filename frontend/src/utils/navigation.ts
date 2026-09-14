@@ -3,6 +3,7 @@ import {
   Building2,
   ClipboardList,
   FileClock,
+  History,
   LayoutDashboard,
   Layers3,
   PackageSearch,
@@ -58,6 +59,12 @@ export const navigationItems: NavigationItem[] = [
     path: "/inventory",
     roles: ["ADMINISTRATOR", "INVENTORY_MANAGER", "WAREHOUSE_OFFICER", "AUDITOR"],
     icon: PackageSearch,
+  },
+  {
+    label: "Stock Movements",
+    path: "/stock-movements",
+    roles: ["ADMINISTRATOR", "INVENTORY_MANAGER", "WAREHOUSE_OFFICER", "AUDITOR"],
+    icon: History,
   },
   {
     label: "Stock Requests",

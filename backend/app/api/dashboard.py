@@ -6,11 +6,13 @@ from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models.category import Category
 from app.models.department import Department
+from app.models.inventory import StockMovement
 from app.models.product import Product
 from app.models.supplier import Supplier
 from app.models.user import User
 from app.models.warehouse import Warehouse
 from app.schemas.dashboard import DashboardSummary, RoleCount
+from app.services.inventory_service import inventory_snapshot_metrics
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
@@ -21,6 +23,8 @@ ENABLED_MODULES = [
     "User administration",
     "Department directory",
     "Product catalog",
+    "Inventory balances",
+    "Opening stock ledger",
     "Supplier register",
     "Warehouse directory",
     "Seeded demo organization",
@@ -39,6 +43,8 @@ def dashboard_summary(
     product_count = db.scalar(select(func.count(Product.id))) or 0
     supplier_count = db.scalar(select(func.count(Supplier.id))) or 0
     warehouse_count = db.scalar(select(func.count(Warehouse.id))) or 0
+    stock_movement_count = db.scalar(select(func.count(StockMovement.id))) or 0
+    inventory_metrics = inventory_snapshot_metrics(db)
     demo_accounts = db.scalar(
         select(func.count(User.id)).where(User.email.like("%@stockpilot.local"))
     ) or 0
@@ -59,8 +65,12 @@ def dashboard_summary(
         products=product_count,
         suppliers=supplier_count,
         warehouses=warehouse_count,
+        inventory_value=float(inventory_metrics["inventory_value"]),
+        low_stock_items=int(inventory_metrics["low_stock_items"]),
+        out_of_stock_items=int(inventory_metrics["out_of_stock_items"]),
+        stock_movements=stock_movement_count,
         role_counts=role_counts,
-        implementation_phase="Phase 2 - Catalog foundation",
+        implementation_phase="Phase 3 - Inventory ledger foundation",
         readiness_score=readiness_score,
         enabled_modules=ENABLED_MODULES,
     )

@@ -12,6 +12,10 @@ export interface DashboardSummary {
   products: number;
   suppliers: number;
   warehouses: number;
+  inventory_value: number;
+  low_stock_items: number;
+  out_of_stock_items: number;
+  stock_movements: number;
   role_counts: RoleCount[];
   implementation_phase: string;
   readiness_score: number;

@@ -1,6 +1,6 @@
 # Database
 
-Phase 2 models:
+Phase 3 models:
 
 ```mermaid
 erDiagram
@@ -8,6 +8,11 @@ erDiagram
     USER ||--o{ AUDIT_LOG : performs
     CATEGORY ||--o{ PRODUCT : classifies
     SUPPLIER ||--o{ PRODUCT : supplies
+    PRODUCT ||--o{ INVENTORY_BALANCE : stocked_as
+    WAREHOUSE ||--o{ INVENTORY_BALANCE : stores
+    PRODUCT ||--o{ STOCK_MOVEMENT : changes
+    WAREHOUSE ||--o{ STOCK_MOVEMENT : records
+    USER ||--o{ STOCK_MOVEMENT : performs
 
     DEPARTMENT {
         int id
@@ -72,6 +77,26 @@ erDiagram
         int preferred_supplier_id
         bool active
     }
+
+    INVENTORY_BALANCE {
+        int id
+        int warehouse_id
+        int product_id
+        int quantity_on_hand
+        int quantity_reserved
+    }
+
+    STOCK_MOVEMENT {
+        int id
+        int product_id
+        int warehouse_id
+        string movement_type
+        int quantity
+        string reference_type
+        string reference_id
+        string reason
+        int performed_by
+    }
 ```
 
-Later phases will add inventory balances, stock movements, purchase requests, purchase orders, goods receipts, stock requests, and transfers.
+Later phases will add purchase requests, purchase orders, goods receipts, stock requests, and transfers.

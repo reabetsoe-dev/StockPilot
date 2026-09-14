@@ -4,7 +4,7 @@
 
 StockPilot is a full-stack business operations platform designed to demonstrate how organizations can manage inventory, procurement, suppliers, warehouses, and stock movement from a centralized system.
 
-This repository is being built incrementally. Phase 2 now establishes the platform foundation and catalog layer: FastAPI, React, SQLite, SQLAlchemy, authentication, JWT sessions, role-aware navigation, seeded demo accounts, protected frontend routes, dashboard metrics, product categories, products, suppliers, warehouses, and product management screens.
+This repository is being built incrementally. Phase 3 now establishes the platform foundation, catalog layer, and inventory ledger: FastAPI, React, SQLite, SQLAlchemy, authentication, JWT sessions, role-aware navigation, seeded demo accounts, protected frontend routes, dashboard metrics, product categories, products, suppliers, warehouses, inventory balances, stock movements, opening stock, and product stock detail screens.
 
 ## Business Problem
 
@@ -33,9 +33,13 @@ All demo users use the password `Demo123!`.
 - Catalog models and APIs for categories, products, suppliers, and warehouses.
 - Seeded catalog data: 8 categories, 12 suppliers, 3 warehouses, and 50 realistic products.
 - Backend uniqueness validation for SKU, barcode, supplier code, warehouse code, and category names.
+- InventoryBalance and StockMovement models for per-warehouse stock tracking.
+- Seeded opening balances across Central, North, and Retail warehouses with traceable OPENING_BALANCE movements.
+- Backend-calculated available quantity, stock status, and inventory valuation.
+- Inventory index, product stock detail, and stock movement history screens.
 - React, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query, Recharts, and Lucide React.
-- Professional login screen, protected routes, app layout, theme toggle, role-aware sidebar foundation, dashboard, user list, department view, product table, category cards, supplier register, and warehouse directory.
-- Backend pytest coverage for authentication, RBAC, and catalog permissions.
+- Professional login screen, protected routes, app layout, theme toggle, role-aware sidebar foundation, dashboard, user list, department view, product table, category cards, supplier register, warehouse directory, inventory table, and ledger view.
+- Backend pytest coverage for authentication, RBAC, catalog permissions, inventory calculations, movement filtering, and inventory authorization.
 - Frontend Vitest coverage for login rendering and role-based navigation.
 
 ## Technology Stack
@@ -116,8 +120,8 @@ Screenshot placeholders are prepared in `docs/screenshots/`. Real screenshots sh
 
 ## Limitations
 
-Phase 2 does not yet implement inventory balances, stock movements, purchase requests, purchase orders, goods receipts, transfers, low-stock logic, or procurement analytics. Those are planned in later phases.
+Phase 3 does not yet implement purchase requests, purchase orders, goods receipts, stock issues, transfers, stock adjustments, a dedicated low-stock/reorder page, or procurement analytics. Those are planned in later phases.
 
 ## Future Improvements
 
-Future phases will add the stock ledger, procurement lifecycle, receiving, transfer logic, low-stock/reorder suggestions, analytics, audit views, and production database verification.
+Future phases will add the procurement lifecycle, receiving, stock issue, transfer logic, low-stock/reorder suggestions, analytics, audit views, and production database verification.

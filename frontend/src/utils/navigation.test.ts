@@ -11,6 +11,7 @@ describe("navigationForRole", () => {
     expect(labels).toContain("Products");
     expect(labels).toContain("Suppliers");
     expect(labels).toContain("Warehouses");
+    expect(labels).toContain("Stock Movements");
   });
 
   it("keeps auditors read-oriented", () => {
@@ -18,6 +19,7 @@ describe("navigationForRole", () => {
 
     expect(labels).toContain("Audit Logs");
     expect(labels).toContain("Products");
+    expect(labels).toContain("Stock Movements");
     expect(labels).not.toContain("Users");
     expect(labels).not.toContain("Departments");
   });
@@ -29,6 +31,7 @@ describe("navigationForRole", () => {
     expect(inventoryLabels).toContain("Products");
     expect(inventoryLabels).toContain("Categories");
     expect(inventoryLabels).toContain("Warehouses");
+    expect(inventoryLabels).toContain("Stock Movements");
     expect(procurementLabels).toContain("Suppliers");
     expect(procurementLabels).toContain("Products");
   });

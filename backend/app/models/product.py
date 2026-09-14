@@ -23,3 +23,5 @@ class Product(TimestampMixin, Base):
 
     category = relationship("Category", back_populates="products")
     preferred_supplier = relationship("Supplier", back_populates="products")
+    inventory_balances = relationship("InventoryBalance", back_populates="product")
+    stock_movements = relationship("StockMovement", back_populates="product")
